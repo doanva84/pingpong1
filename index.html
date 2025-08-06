@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping Pong Tournament Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1><i class="fas fa-table-tennis"></i> Ping Pong Tournament Manager</h1>
+                <nav class="nav">
+                    <button class="nav-btn active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </button>
+                    <button class="nav-btn" data-section="players">
+                        <i class="fas fa-users"></i> Vận động viên
+                    </button>
+                    <button class="nav-btn" data-section="doubles">
+                        <i class="fas fa-user-friends"></i> Cặp đôi
+                    </button>
+                    <button class="nav-btn" data-section="teams">
+                        <i class="fas fa-users-cog"></i> Đội
+                    </button>
+                    <button class="nav-btn" data-section="tournaments">
+                        <i class="fas fa-trophy"></i> Giải đấu
+                    </button>
+                    <button class="nav-btn" data-section="matches">
+                        <i class="fas fa-gamepad"></i> Trận đấu
+                    </button>
+                    <button class="nav-btn" data-section="rankings">
+                        <i class="fas fa-medal"></i> Xếp hạng
+                    </button>
+                    <button class="nav-btn" data-section="rules">
+                        <i class="fas fa-gavel"></i> Luật
+                    </button>
+                    <button class="nav-btn" data-section="utilities">
+                        <i class="fas fa-tools"></i> Tiện ích
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active">
+                    <h2>Dashboard</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <div class="stat-info">
+                                <h3 id="total-players">0</h3>
+                                <p>Vận động viên</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-user-friends"></i>
+                            <div class="stat-info">
+                                <h3 id="total-doubles">0</h3>
+                                <p>Cặp đôi</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-users-cog"></i>
+                            <div class="stat-info">
+                                <h3 id="total-teams">0</h3>
+                                <p>Đội</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-trophy"></i>
+                            <div class="stat-info">
+                                <h3 id="total-tournaments">0</h3>
+                                <p>Giải đấu</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-gamepad"></i>
+                            <div class="stat-info">
+                                <h3 id="total-matches">0</h3>
+                                <p>Trận đấu</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-clock"></i>
+                            <div class="stat-info">
+                                <h3 id="active-tournaments">0</h3>
+                                <p>Giải đang diễn ra</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-content">
+                        <div class="recent-activities">
+                            <h3>Hoạt động gần đây</h3>
+                            <div id="recent-activities-list" class="activity-list">
+                                <!-- Recent activities will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <h3>Thao tác nhanh</h3>
+                            <div class="quick-action-buttons">
+                                <button class="btn btn-primary" onclick="showAddPlayerModal()">
+                                    <i class="fas fa-plus"></i> Thêm vận động viên
+                                </button>
+                                <button class="btn btn-primary" onclick="showCreateTournamentModal()">
+                                    <i class="fas fa-plus"></i> Tạo giải đấu
+                                </button>
+                                <button class="btn btn-primary" onclick="showCreateMatchModal()">
+                                    <i class="fas fa-plus"></i> Tạo trận đấu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Players Section -->
+                <section id="players" class="section">
+                    <div class="section-header">
+                        <h2>Quản lý Vận động viên</h2>
+                        <button class="btn btn-primary" onclick="showAddPlayerModal()">
+                            <i class="fas fa-plus"></i> Thêm vận động viên
+                        </button>
+                    </div>
+                    
+                    <div class="filters">
+                        <input type="text" id="player-search" placeholder="Tìm kiếm vận động viên..." class="search-input">
+                        <select id="rank-filter" class="filter-select">
+                            <option value="">Tất cả hạng</option>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Professional">Professional</option>
+                        </select>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="players-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên</th>
+                                    <th>Email</th>
+                                    <th>Địa chỉ</th>
+                                    <th>Hạng</th>
+                                    <th>Điểm</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-tbody">
+                                <!-- Players will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Doubles Section -->
+                <section id="doubles" class="section">
+                    <div class="section-header">
+                        <h2>Quản lý Cặp đôi</h2>
+                        <button class="btn btn-primary" onclick="showCreateDoubleModal()">
+                            <i class="fas fa-plus"></i> Tạo cặp đôi
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="doubles-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên cặp</th>
+                                    <th>Vận động viên 1</th>
+                                    <th>Vận động viên 2</th>
+                                    <th>Điểm</th>
+                                    <th>Trận thắng</th>
+                                    <th>Trận thua</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="doubles-tbody">
+                                <!-- Doubles will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Teams Section -->
+                <section id="teams" class="section">
+                    <div class="section-header">
+                        <h2>Quản lý Đội</h2>
+                        <button class="btn btn-primary" onclick="showCreateTeamModal()">
+                            <i class="fas fa-plus"></i> Tạo đội
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="teams-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên đội</th>
+                                    <th>Thành viên</th>
+                                    <th>Điểm</th>
+                                    <th>Trận thắng</th>
+                                    <th>Trận thua</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teams-tbody">
+                                <!-- Teams will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tournaments Section -->
+                <section id="tournaments" class="section">
+                    <div class="section-header">
+                        <h2>Quản lý Giải đấu</h2>
+                        <button class="btn btn-primary" onclick="showCreateTournamentModal()">
+                            <i class="fas fa-plus"></i> Tạo giải đấu
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="tournaments-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên giải</th>
+                                    <th>Loại</th>
+                                    <th>Ngày bắt đầu</th>
+                                    <th>Ngày kết thúc</th>
+                                    <th>Trạng thái</th>
+                                    <th>Số người tham gia</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tournaments-tbody">
+                                <!-- Tournaments will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Matches Section -->
+                <section id="matches" class="section">
+                    <div class="section-header">
+                        <h2>Quản lý Trận đấu</h2>
+                        <button class="btn btn-primary" onclick="showCreateMatchModal()">
+                            <i class="fas fa-plus"></i> Tạo trận đấu
+                        </button>
+                    </div>
+                    
+                    <div class="filters">
+                        <select id="match-type-filter" class="filter-select">
+                            <option value="">Tất cả loại</option>
+                            <option value="singles">Đơn</option>
+                            <option value="doubles">Đôi</option>
+                            <option value="teams">Đồng đội</option>
+                        </select>
+                        <select id="match-status-filter" class="filter-select">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="scheduled">Đã lên lịch</option>
+                            <option value="in-progress">Đang diễn ra</option>
+                            <option value="completed">Đã hoàn thành</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="matches-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Loại</th>
+                                    <th>Đối thủ 1</th>
+                                    <th>Đối thủ 2</th>
+                                    <th>Tỷ số</th>
+                                    <th>Ngày</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matches-tbody">
+                                <!-- Matches will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Rankings Section -->
+                <section id="rankings" class="section">
+                    <div class="section-header">
+                        <h2>Bảng xếp hạng</h2>
+                        <div class="ranking-tabs">
+                            <button class="tab-btn active" data-ranking="players">Vận động viên</button>
+                            <button class="tab-btn" data-ranking="doubles">Cặp đôi</button>
+                            <button class="tab-btn" data-ranking="teams">Đội</button>
+                        </div>
+                    </div>
+                    
+                    <div id="rankings-content" class="rankings-content">
+                        <!-- Rankings will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Rules Section -->
+                <section id="rules" class="section">
+                    <div class="section-header">
+                        <h2>Luật thi đấu</h2>
+                        <button class="btn btn-primary" onclick="showAddRuleModal()">
+                            <i class="fas fa-plus"></i> Thêm luật
+                        </button>
+                    </div>
+                    
+                    <div id="rules-content" class="rules-content">
+                        <!-- Rules will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Utilities Section -->
+                <section id="utilities" class="section">
+                    <div class="section-header">
+                        <h2>Tiện ích</h2>
+                    </div>
+                    
+                    <div class="utilities-grid">
+                        <div class="utility-card">
+                            <h3><i class="fas fa-download"></i> Import/Export</h3>
+                            <div class="utility-actions">
+                                <button class="btn btn-primary" onclick="exportData()">
+                                    <i class="fas fa-download"></i> Export dữ liệu
+                                </button>
+                                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                                <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">
+                                    <i class="fas fa-upload"></i> Import dữ liệu
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="utility-card">
+                            <h3><i class="fas fa-print"></i> In ấn</h3>
+                            <div class="utility-actions">
+                                <button class="btn btn-primary" onclick="printPlayers()">
+                                    <i class="fas fa-print"></i> In danh sách VĐV
+                                </button>
+                                <button class="btn btn-primary" onclick="printTournament()">
+                                    <i class="fas fa-print"></i> In thông tin giải đấu
+                                </button>
+                                <button class="btn btn-primary" onclick="printRankings()">
+                                    <i class="fas fa-print"></i> In bảng xếp hạng
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="utility-card">
+                            <h3><i class="fas fa-database"></i> Dữ liệu</h3>
+                            <div class="utility-actions">
+                                <button class="btn btn-warning" onclick="clearAllData()">
+                                    <i class="fas fa-trash"></i> Xóa tất cả dữ liệu
+                                </button>
+                                <button class="btn btn-info" onclick="loadSampleData()">
+                                    <i class="fas fa-database"></i> Tải dữ liệu mẫu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals will be added here -->
+    <div id="modal-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/models/Player.js"></script>
+    <script src="js/models/Double.js"></script>
+    <script src="js/models/Team.js"></script>
+    <script src="js/models/Tournament.js"></script>
+    <script src="js/models/Match.js"></script>
+    <script src="js/models/Rule.js"></script>
+    <script src="js/controllers/PlayerController.js"></script>
+    <script src="js/controllers/DoubleController.js"></script>
+    <script src="js/controllers/TeamController.js"></script>
+    <script src="js/controllers/TournamentController.js"></script>
+    <script src="js/controllers/MatchController.js"></script>
+    <script src="js/controllers/RuleController.js"></script>
+    <script src="js/utils/Storage.js"></script>
+    <script src="js/utils/DataManager.js"></script>
+    <script src="js/utils/PrintUtils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
