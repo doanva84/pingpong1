@@ -4,6 +4,7 @@ class RuleController {
         this.rules = new Map();
         this.eventHandlers = new Map();
         this.defaultRules = this.getDefaultRules();
+        this.storage = new Storage();
         
         this.loadRules();
         this.setupEventHandlers();
@@ -12,20 +13,20 @@ class RuleController {
     // Load rules from storage
     loadRules() {
         try {
-            const stored = Storage.load('rules');
+            const stored = this.storage.load('rules');
             if (stored && Array.isArray(stored)) {
                 stored.forEach(ruleData => {
                     const rule = new Rule(
+                        ruleData.id,
                         ruleData.name,
-                        ruleData.type,
                         ruleData.description,
-                        ruleData.value
+                        ruleData.category
                     );
                     
                     // Restore rule state
-                    rule.id = ruleData.id;
+                    rule.type = ruleData.type;
+                    rule.value = ruleData.value;
                     rule.isActive = ruleData.isActive !== undefined ? ruleData.isActive : true;
-                    rule.category = ruleData.category || 'general';
                     rule.priority = ruleData.priority || 1;
                     rule.conditions = ruleData.conditions || [];
                     rule.actions = ruleData.actions || [];
@@ -47,9 +48,9 @@ class RuleController {
         try {
             const ruleArray = Array.from(this.rules.values()).map(rule => ({
                 id: rule.id,
-                name: rule.name,
+                name: rule.title, // Rule model uses 'title' property
                 type: rule.type,
-                description: rule.description,
+                description: rule.content, // Rule model uses 'content' property
                 value: rule.value,
                 isActive: rule.isActive,
                 category: rule.category,
@@ -58,7 +59,7 @@ class RuleController {
                 actions: rule.actions
             }));
             
-            Storage.save('rules', ruleArray);
+            this.storage.save('rules', ruleArray);
             return true;
         } catch (error) {
             console.error('Error saving rules:', error);
@@ -176,13 +177,14 @@ class RuleController {
     loadDefaultRules() {
         this.defaultRules.forEach(ruleData => {
             const rule = new Rule(
+                null, // Let Rule generate its own ID
                 ruleData.name,
-                ruleData.type,
                 ruleData.description,
-                ruleData.value
+                ruleData.category
             );
             
-            rule.category = ruleData.category;
+            rule.type = ruleData.type;
+            rule.value = ruleData.value;
             rule.priority = ruleData.priority;
             rule.conditions = ruleData.conditions;
             rule.actions = ruleData.actions;
@@ -214,7 +216,7 @@ class RuleController {
 
             // Check for duplicate names
             const existingRule = Array.from(this.rules.values()).find(rule => 
-                rule.name.toLowerCase() === ruleData.name.toLowerCase()
+                rule.title.toLowerCase() === ruleData.name.toLowerCase()
             );
             if (existingRule) {
                 throw new Error('Tên quy tắc đã tồn tại');
@@ -222,14 +224,15 @@ class RuleController {
 
             // Create rule
             const rule = new Rule(
+                null, // Let Rule generate its own ID
                 ruleData.name,
-                ruleData.type,
                 ruleData.description || '',
-                ruleData.value
+                ruleData.category || 'custom'
             );
 
             // Set additional properties
-            rule.category = ruleData.category || 'custom';
+            rule.type = ruleData.type;
+            rule.value = ruleData.value;
             rule.priority = ruleData.priority || 1;
             rule.conditions = ruleData.conditions || [];
             rule.actions = ruleData.actions || [];
@@ -451,7 +454,7 @@ class RuleController {
 
     // Validate tournament rule
     validateTournamentRule(rule, tournament) {
-        switch (rule.name) {
+        switch (rule.title) {
             case 'Tối đa người tham gia':
                 return tournament.participants.length <= rule.value;
             default:
@@ -461,7 +464,7 @@ class RuleController {
 
     // Validate match rule
     validateMatchRule(rule, match) {
-        switch (rule.name) {
+        switch (rule.title) {
             case 'Số set thắng trận':
                 if (match.status === 'completed' && match.winner) {
                     const winnerSets = this.countWinnerSets(match, match.winner);
@@ -482,10 +485,9 @@ class RuleController {
             return true;
         }
 
-        const winPointRule = this.getRule('Điểm thắng set');
-        const minDifferenceRule = this.getRule('Chênh lệch điểm tối thiểu');
+        const winPointValue = this.getRuleValue('Điểm thắng set') || 11;
 
-        switch (rule.name) {
+        switch (rule.title) {
             case 'Điểm thắng set':
                 return match.scores.every(score => {
                     const maxScore = Math.max(score.player1Score, score.player2Score);
@@ -504,7 +506,7 @@ class RuleController {
                     const maxScore = Math.max(score.player1Score, score.player2Score);
                     
                     // If someone reached win point, check difference
-                    if (maxScore >= (winPointRule ? winPointRule.value : 11)) {
+                    if (maxScore >= winPointValue) {
                         return difference >= rule.value;
                     }
                     return true;
@@ -523,7 +525,7 @@ class RuleController {
 
     // Validate registration rule
     validateRegistrationRule(rule, tournament) {
-        switch (rule.name) {
+        switch (rule.title) {
             case 'Bắt buộc đăng ký trước':
                 if (tournament.startDate) {
                     const now = new Date();
@@ -552,7 +554,7 @@ class RuleController {
 
     // Get rule value by name
     getRuleValue(ruleName) {
-        const rule = Array.from(this.rules.values()).find(r => r.name === ruleName);
+        const rule = Array.from(this.rules.values()).find(r => r.title === ruleName);
         return rule ? rule.value : null;
     }
 
@@ -649,8 +651,8 @@ class RuleController {
         
         const lowerQuery = query.toLowerCase();
         return this.getAllRules().filter(rule =>
-            rule.name.toLowerCase().includes(lowerQuery) ||
-            rule.description.toLowerCase().includes(lowerQuery) ||
+            rule.title.toLowerCase().includes(lowerQuery) ||
+            rule.content.toLowerCase().includes(lowerQuery) ||
             rule.category.toLowerCase().includes(lowerQuery) ||
             rule.type.toLowerCase().includes(lowerQuery)
         );

@@ -99,6 +99,21 @@ class PingPongApp {
             this.handleTeamChange(e.detail);
         });
 
+        // Listen for tournament controller changes
+        document.addEventListener('tournamentControllerChange', (e) => {
+            this.handleTournamentChange(e.detail);
+        });
+
+        // Listen for match controller changes
+        document.addEventListener('matchControllerChange', (e) => {
+            this.handleMatchChange(e.detail);
+        });
+
+        // Listen for rule controller changes
+        document.addEventListener('ruleControllerChange', (e) => {
+            this.handleRuleChange(e.detail);
+        });
+
         // Player search
         const playerSearch = document.getElementById('player-search');
         if (playerSearch) {
@@ -527,6 +542,60 @@ class PingPongApp {
         }
     }
 
+    // Handle tournament controller changes
+    handleTournamentChange(detail) {
+        const { eventType, data } = detail;
+        
+        switch (eventType) {
+            case 'tournament_created':
+            case 'tournament_updated':
+            case 'tournament_deleted':
+            case 'tournament_started':
+            case 'tournament_ended':
+                if (this.currentSection === 'tournaments') {
+                    this.renderTournamentsTable();
+                }
+                this.updateDashboardStats();
+                break;
+        }
+    }
+
+    // Handle match controller changes
+    handleMatchChange(detail) {
+        const { eventType, data } = detail;
+        
+        switch (eventType) {
+            case 'match_created':
+            case 'match_updated':
+            case 'match_deleted':
+            case 'match_started':
+            case 'match_ended':
+            case 'match_score_updated':
+                if (this.currentSection === 'matches') {
+                    this.renderMatchesTable();
+                }
+                this.updateDashboardStats();
+                break;
+        }
+    }
+
+    // Handle rule controller changes
+    handleRuleChange(detail) {
+        const { eventType, data } = detail;
+        
+        switch (eventType) {
+            case 'rule_created':
+            case 'rule_updated':
+            case 'rule_deleted':
+            case 'rule_activated':
+            case 'rule_deactivated':
+                if (this.currentSection === 'rules') {
+                    this.renderRulesTable();
+                }
+                break;
+        }
+    }
+
     // Render doubles table
     renderDoublesTable(doubles = null) {
         const tbody = document.getElementById('doubles-tbody');
@@ -618,6 +687,103 @@ class PingPongApp {
         });
     }
 
+    // Render rules table
+    renderRulesTable(rules = null) {
+        const rulesContent = document.getElementById('rules-content');
+        if (!rulesContent) return;
+
+        const rulesToShow = rules || this.controllers.rule.getAllRules();
+        
+        if (rulesToShow.length === 0) {
+            rulesContent.innerHTML = `
+                <div class="empty-state">
+                    <p>Chưa có luật nào được thiết lập</p>
+                    <button class="btn btn-primary" onclick="app.showAddRuleModal()">
+                        <i class="fas fa-plus"></i> Thêm luật đầu tiên
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        // Group rules by category
+        const rulesByCategory = {};
+        rulesToShow.forEach(rule => {
+            if (!rulesByCategory[rule.category]) {
+                rulesByCategory[rule.category] = [];
+            }
+            rulesByCategory[rule.category].push(rule);
+        });
+
+        let html = '';
+        Object.keys(rulesByCategory).forEach(category => {
+            const categoryName = this.getCategoryDisplayName(category);
+            html += `
+                <div class="rule-category">
+                    <h3>${categoryName}</h3>
+                    <div class="rules-list">
+            `;
+            
+            rulesByCategory[category].forEach(rule => {
+                html += `
+                    <div class="rule-item ${rule.isActive ? 'active' : 'inactive'}">
+                        <div class="rule-header">
+                            <h4>${rule.title}</h4>
+                            <div class="rule-actions">
+                                <span class="rule-status ${rule.isActive ? 'active' : 'inactive'}">
+                                    ${rule.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                                </span>
+                                <button class="btn btn-sm btn-primary" onclick="app.editRule('${rule.id}')" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm ${rule.isActive ? 'btn-warning' : 'btn-success'}" 
+                                        onclick="app.toggleRuleStatus('${rule.id}')" 
+                                        title="${rule.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}">
+                                    <i class="fas ${rule.isActive ? 'fa-pause' : 'fa-play'}"></i>
+                                </button>
+                                ${rule.category !== 'scoring' && rule.category !== 'match' ? `
+                                    <button class="btn btn-sm btn-danger" onclick="app.deleteRule('${rule.id}')" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="rule-content">
+                            <p class="rule-description">${rule.content}</p>
+                            <div class="rule-details">
+                                <span class="rule-value">Giá trị: <strong>${rule.value}</strong></span>
+                                <span class="rule-type">Loại: ${rule.type}</span>
+                                <span class="rule-priority">Độ ưu tiên: ${rule.priority}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        rulesContent.innerHTML = html;
+    }
+
+    // Get display name for rule category
+    getCategoryDisplayName(category) {
+        const categoryNames = {
+            'scoring': 'Tính điểm',
+            'match': 'Trận đấu',
+            'timing': 'Thời gian',
+            'serving': 'Phát bóng',
+            'registration': 'Đăng ký',
+            'tournament': 'Giải đấu',
+            'custom': 'Tùy chỉnh',
+            'general': 'Chung'
+        };
+        return categoryNames[category] || category;
+    }
+
     // Double CRUD operations
     viewDouble(doubleId) {
         const double = this.controllers.double.getDoubleById(doubleId);
@@ -696,6 +862,158 @@ class PingPongApp {
                 this.showError('Lỗi khi xóa đội: ' + error.message);
             }
         }
+    }
+
+    // Rule CRUD operations
+    showAddRuleModal() {
+        this.showRuleModal(null, 'add');
+    }
+
+    editRule(ruleId) {
+        const rule = this.controllers.rule.getRule(ruleId);
+        if (!rule) {
+            this.showError('Không tìm thấy luật');
+            return;
+        }
+        
+        this.showRuleModal(rule, 'edit');
+    }
+
+    async deleteRule(ruleId) {
+        const rule = this.controllers.rule.getRule(ruleId);
+        if (!rule) {
+            this.showError('Không tìm thấy luật');
+            return;
+        }
+
+        if (confirm(`Bạn có chắc chắn muốn xóa luật "${rule.title}"?`)) {
+            try {
+                await this.controllers.rule.deleteRule(ruleId);
+                this.showSuccess('Đã xóa luật thành công');
+                this.renderRulesTable();
+            } catch (error) {
+                this.showError('Lỗi khi xóa luật: ' + error.message);
+            }
+        }
+    }
+
+    async toggleRuleStatus(ruleId) {
+        const rule = this.controllers.rule.getRule(ruleId);
+        if (!rule) {
+            this.showError('Không tìm thấy luật');
+            return;
+        }
+
+        try {
+            if (rule.isActive) {
+                await this.controllers.rule.deactivateRule(ruleId);
+                this.showSuccess('Đã vô hiệu hóa luật');
+            } else {
+                await this.controllers.rule.activateRule(ruleId);
+                this.showSuccess('Đã kích hoạt luật');
+            }
+            this.renderRulesTable();
+        } catch (error) {
+            this.showError('Lỗi khi thay đổi trạng thái luật: ' + error.message);
+        }
+    }
+
+    showRuleModal(rule = null, mode = 'add') {
+        const isEdit = mode === 'edit';
+        const modalTitle = isEdit ? 'Chỉnh sửa luật' : 'Thêm luật mới';
+        
+        const modalContent = `
+            <h3>${modalTitle}</h3>
+            <form id="ruleForm">
+                <div class="form-group">
+                    <label for="ruleName">Tên luật:</label>
+                    <input type="text" id="ruleName" name="name" value="${rule ? rule.title : ''}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleType">Loại:</label>
+                    <select id="ruleType" name="type" required>
+                        <option value="">Chọn loại...</option>
+                        <option value="scoring" ${rule && rule.type === 'scoring' ? 'selected' : ''}>Tính điểm</option>
+                        <option value="match" ${rule && rule.type === 'match' ? 'selected' : ''}>Trận đấu</option>
+                        <option value="timing" ${rule && rule.type === 'timing' ? 'selected' : ''}>Thời gian</option>
+                        <option value="serving" ${rule && rule.type === 'serving' ? 'selected' : ''}>Phát bóng</option>
+                        <option value="registration" ${rule && rule.type === 'registration' ? 'selected' : ''}>Đăng ký</option>
+                        <option value="tournament" ${rule && rule.type === 'tournament' ? 'selected' : ''}>Giải đấu</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleCategory">Danh mục:</label>
+                    <select id="ruleCategory" name="category" required>
+                        <option value="">Chọn danh mục...</option>
+                        <option value="scoring" ${rule && rule.category === 'scoring' ? 'selected' : ''}>Tính điểm</option>
+                        <option value="match" ${rule && rule.category === 'match' ? 'selected' : ''}>Trận đấu</option>
+                        <option value="timing" ${rule && rule.category === 'timing' ? 'selected' : ''}>Thời gian</option>
+                        <option value="serving" ${rule && rule.category === 'serving' ? 'selected' : ''}>Phát bóng</option>
+                        <option value="registration" ${rule && rule.category === 'registration' ? 'selected' : ''}>Đăng ký</option>
+                        <option value="tournament" ${rule && rule.category === 'tournament' ? 'selected' : ''}>Giải đấu</option>
+                        <option value="custom" ${rule && rule.category === 'custom' ? 'selected' : ''}>Tùy chỉnh</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleDescription">Mô tả:</label>
+                    <textarea id="ruleDescription" name="description" rows="3">${rule ? rule.content : ''}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleValue">Giá trị:</label>
+                    <input type="number" id="ruleValue" name="value" value="${rule ? rule.value : ''}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rulePriority">Độ ưu tiên:</label>
+                    <select id="rulePriority" name="priority">
+                        <option value="1" ${rule && rule.priority === 1 ? 'selected' : ''}>Cao (1)</option>
+                        <option value="2" ${rule && rule.priority === 2 ? 'selected' : ''}>Trung bình (2)</option>
+                        <option value="3" ${rule && rule.priority === 3 ? 'selected' : ''}>Thấp (3)</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        ${isEdit ? 'Cập nhật' : 'Thêm'}
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Hủy</button>
+                </div>
+            </form>
+        `;
+
+        this.showModal(modalContent);
+
+        // Handle form submission
+        const form = document.getElementById('ruleForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const ruleData = {
+                title: formData.get('name'),
+                content: formData.get('description'),
+                category: formData.get('category')
+            };
+
+            try {
+                if (isEdit) {
+                    await this.controllers.rule.updateRule(rule.id, ruleData);
+                    this.showSuccess('Đã cập nhật luật thành công');
+                } else {
+                    await this.controllers.rule.createRule(ruleData.title, formData.get('type'), ruleData.content, ruleData.category);
+                    this.showSuccess('Đã thêm luật thành công');
+                }
+                
+                this.closeModal();
+                this.renderRulesTable();
+            } catch (error) {
+                this.showError('Lỗi: ' + error.message);
+            }
+        });
     }
 
     // Show double modal (simplified version)
@@ -960,10 +1278,7 @@ class PingPongApp {
     }
 
     loadRules() {
-        const content = document.getElementById('rules-content');
-        if (content) {
-            content.innerHTML = '<div class="text-center">Tính năng đang phát triển</div>';
-        }
+        this.renderRulesTable();
     }
 
     loadUtilities() {

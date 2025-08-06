@@ -6,6 +6,7 @@ class TournamentController {
         this.teamController = teamController;
         this.tournaments = new Map();
         this.eventHandlers = new Map();
+        this.storage = new Storage();
         
         this.loadTournaments();
         this.setupEventHandlers();
@@ -14,7 +15,7 @@ class TournamentController {
     // Load tournaments from storage
     loadTournaments() {
         try {
-            const stored = Storage.load('tournaments');
+            const stored = this.storage.load('tournaments');
             if (stored && Array.isArray(stored)) {
                 stored.forEach(tournamentData => {
                     const tournament = new Tournament(
@@ -64,7 +65,7 @@ class TournamentController {
                 winner: tournament.winner
             }));
             
-            Storage.save('tournaments', tournamentArray);
+            this.storage.save('tournaments', tournamentArray);
             return true;
         } catch (error) {
             console.error('Error saving tournaments:', error);

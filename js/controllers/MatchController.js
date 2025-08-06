@@ -7,6 +7,7 @@ class MatchController {
         this.tournamentController = tournamentController;
         this.matches = new Map();
         this.eventHandlers = new Map();
+        this.storage = new Storage();
         
         this.loadMatches();
         this.setupEventHandlers();
@@ -15,7 +16,7 @@ class MatchController {
     // Load matches from storage
     loadMatches() {
         try {
-            const stored = Storage.load('matches');
+            const stored = this.storage.load('matches');
             if (stored && Array.isArray(stored)) {
                 stored.forEach(matchData => {
                     const match = new Match(
@@ -63,7 +64,7 @@ class MatchController {
                 notes: match.notes
             }));
             
-            Storage.save('matches', matchArray);
+            this.storage.save('matches', matchArray);
             return true;
         } catch (error) {
             console.error('Error saving matches:', error);
