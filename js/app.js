@@ -1257,24 +1257,452 @@ class PingPongApp {
     }
 
     loadTournaments() {
+        this.renderTournamentsTable();
+    }
+
+    // Render tournaments table
+    renderTournamentsTable() {
         const tbody = document.getElementById('tournaments-tbody');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tính năng đang phát triển</td></tr>';
+        if (!tbody) return;
+
+        try {
+            const tournaments = this.controllers.tournament.getAllTournaments();
+            
+            if (tournaments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Chưa có giải đấu nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = tournaments.map(tournament => `
+                <tr data-tournament-id="${tournament.id}">
+                    <td>${tournament.name}</td>
+                    <td><span class="badge badge-${this.getTournamentTypeClass(tournament.type)}">${this.getTournamentTypeText(tournament.type)}</span></td>
+                    <td><span class="badge badge-${this.getTournamentStatusClass(tournament.status)}">${this.getTournamentStatusText(tournament.status)}</span></td>
+                    <td>${tournament.participants.length}/${tournament.maxParticipants || 'Không giới hạn'}</td>
+                    <td>${tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}</td>
+                    <td>${tournament.endDate ? new Date(tournament.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}</td>
+                    <td>${tournament.location || 'Chưa xác định'}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-primary" onclick="app.viewTournament('${tournament.id}')" title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="app.editTournament('${tournament.id}')" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="app.deleteTournament('${tournament.id}')" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Error rendering tournaments table:', error);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Lỗi tải dữ liệu giải đấu</td></tr>';
         }
+    }
+
+    // Helper methods for tournament display
+    getTournamentTypeClass(type) {
+        const classes = {
+            'single': 'primary',
+            'double': 'success', 
+            'team': 'info',
+            'mixed': 'warning'
+        };
+        return classes[type] || 'secondary';
+    }
+
+    getTournamentTypeText(type) {
+        const texts = {
+            'single': 'Đơn',
+            'double': 'Đôi',
+            'team': 'Đội',
+            'mixed': 'Hỗn hợp'
+        };
+        return texts[type] || type;
+    }
+
+    getTournamentStatusClass(status) {
+        const classes = {
+            'draft': 'secondary',
+            'registration': 'info',
+            'ongoing': 'warning',
+            'completed': 'success',
+            'cancelled': 'danger'
+        };
+        return classes[status] || 'secondary';
+    }
+
+    getTournamentStatusText(status) {
+        const texts = {
+            'draft': 'Nháp',
+            'registration': 'Đang đăng ký',
+            'ongoing': 'Đang diễn ra',
+            'completed': 'Hoàn thành',
+            'cancelled': 'Đã hủy'
+        };
+        return texts[status] || status;
     }
 
     loadMatches() {
+        this.renderMatchesTable();
+    }
+
+    // Render matches table
+    renderMatchesTable() {
         const tbody = document.getElementById('matches-tbody');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tính năng đang phát triển</td></tr>';
+        if (!tbody) return;
+
+        try {
+            const matches = this.controllers.match.getAllMatches();
+            
+            if (matches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Chưa có trận đấu nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = matches.map(match => `
+                <tr data-match-id="${match.id}">
+                    <td>${match.tournament ? match.tournament.name : 'Không xác định'}</td>
+                    <td>${this.getParticipantName(match.participant1)}</td>
+                    <td>${this.getParticipantName(match.participant2)}</td>
+                    <td>
+                        <span class="badge badge-${this.getMatchStatusClass(match.status)}">
+                            ${this.getMatchStatusText(match.status)}
+                        </span>
+                    </td>
+                    <td>${this.getMatchScore(match)}</td>
+                    <td>${match.winner ? this.getParticipantName(match.winner) : '-'}</td>
+                    <td>${match.scheduledDate ? new Date(match.scheduledDate).toLocaleString('vi-VN') : 'Chưa xác định'}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-primary" onclick="app.viewMatch('${match.id}')" title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="app.scoreMatch('${match.id}')" title="Ghi điểm">
+                                <i class="fas fa-plus-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="app.editMatch('${match.id}')" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="app.deleteMatch('${match.id}')" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Error rendering matches table:', error);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Lỗi tải dữ liệu trận đấu</td></tr>';
         }
     }
 
-    loadRankings() {
-        const content = document.getElementById('rankings-content');
-        if (content) {
-            content.innerHTML = '<div class="text-center">Tính năng đang phát triển</div>';
+    // Helper methods for match display
+    getParticipantName(participant) {
+        if (!participant) return 'Chưa xác định';
+        
+        if (typeof participant === 'string') return participant;
+        if (participant.name) return participant.name;
+        if (participant.player1 && participant.player2) {
+            return `${participant.player1.name} / ${participant.player2.name}`;
         }
+        if (participant.members) {
+            return participant.members.map(m => m.name).join(', ');
+        }
+        
+        return 'Không xác định';
+    }
+
+    getMatchStatusClass(status) {
+        const classes = {
+            'scheduled': 'info',
+            'ongoing': 'warning',
+            'completed': 'success',
+            'cancelled': 'danger'
+        };
+        return classes[status] || 'secondary';
+    }
+
+    getMatchStatusText(status) {
+        const texts = {
+            'scheduled': 'Đã lên lịch',
+            'ongoing': 'Đang diễn ra',
+            'completed': 'Hoàn thành',
+            'cancelled': 'Đã hủy'
+        };
+        return texts[status] || status;
+    }
+
+    getMatchScore(match) {
+        if (!match.scores || match.scores.length === 0) {
+            return '-';
+        }
+        
+        return match.scores.map(score => 
+            `${score.player1Score}-${score.player2Score}`
+        ).join(', ');
+    }
+
+    loadRankings() {
+        this.renderRankings();
+    }
+
+    // Render rankings
+    renderRankings() {
+        const content = document.getElementById('rankings-content');
+        if (!content) return;
+
+        try {
+            const rankings = this.calculateRankings();
+            
+            content.innerHTML = `
+                <div class="rankings-container">
+                    <div class="rankings-header">
+                        <h3><i class="fas fa-medal"></i> Bảng xếp hạng</h3>
+                        <div class="rankings-filters">
+                            <select id="rankingType" onchange="app.renderRankings()">
+                                <option value="overall">Tổng thể</option>
+                                <option value="wins">Thắng nhiều nhất</option>
+                                <option value="winRate">Tỷ lệ thắng</option>
+                                <option value="points">Điểm số</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="rankings-table">
+                        ${this.renderRankingsTable(rankings)}
+                    </div>
+                    
+                    <div class="rankings-stats">
+                        ${this.renderRankingsStats(rankings)}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error rendering rankings:', error);
+            content.innerHTML = '<div class="text-center text-danger">Lỗi tải bảng xếp hạng</div>';
+        }
+    }
+
+    // Calculate rankings
+    calculateRankings() {
+        const players = this.controllers.player.getAllPlayers();
+        const matches = this.controllers.match.getAllMatches().filter(m => m.status === 'completed');
+        
+        const rankings = players.map(player => {
+            const playerMatches = matches.filter(m => 
+                (m.participant1 && m.participant1.id === player.id) || 
+                (m.participant2 && m.participant2.id === player.id)
+            );
+            
+            const wins = playerMatches.filter(m => 
+                m.winner && m.winner.id === player.id
+            ).length;
+            
+            const losses = playerMatches.length - wins;
+            const winRate = playerMatches.length > 0 ? (wins / playerMatches.length * 100) : 0;
+            
+            // Calculate points based on set scores
+            let totalPoints = 0;
+            let totalOpponentPoints = 0;
+            
+            playerMatches.forEach(match => {
+                if (match.scores && match.scores.length > 0) {
+                    match.scores.forEach(score => {
+                        if (match.participant1 && match.participant1.id === player.id) {
+                            totalPoints += score.player1Score;
+                            totalOpponentPoints += score.player2Score;
+                        } else if (match.participant2 && match.participant2.id === player.id) {
+                            totalPoints += score.player2Score;
+                            totalOpponentPoints += score.player1Score;
+                        }
+                    });
+                }
+            });
+            
+            const pointsDifference = totalPoints - totalOpponentPoints;
+            
+            return {
+                player: player,
+                matches: playerMatches.length,
+                wins: wins,
+                losses: losses,
+                winRate: winRate,
+                points: totalPoints,
+                opponentPoints: totalOpponentPoints,
+                pointsDifference: pointsDifference,
+                rating: this.calculatePlayerRating(wins, losses, winRate, pointsDifference)
+            };
+        });
+        
+        // Sort by rating (default)
+        const rankingType = document.getElementById('rankingType')?.value || 'overall';
+        
+        switch (rankingType) {
+            case 'wins':
+                rankings.sort((a, b) => b.wins - a.wins || b.winRate - a.winRate);
+                break;
+            case 'winRate':
+                rankings.sort((a, b) => b.winRate - a.winRate || b.wins - a.wins);
+                break;
+            case 'points':
+                rankings.sort((a, b) => b.pointsDifference - a.pointsDifference || b.points - a.points);
+                break;
+            default: // overall
+                rankings.sort((a, b) => b.rating - a.rating);
+        }
+        
+        return rankings;
+    }
+
+    // Calculate player rating
+    calculatePlayerRating(wins, losses, winRate, pointsDifference) {
+        const matchWeight = 1;
+        const winRateWeight = 2;
+        const pointsWeight = 0.1;
+        
+        return (wins * matchWeight) + (winRate * winRateWeight) + (pointsDifference * pointsWeight);
+    }
+
+    // Render rankings table
+    renderRankingsTable(rankings) {
+        if (rankings.length === 0) {
+            return '<div class="text-center">Chưa có dữ liệu xếp hạng</div>';
+        }
+
+        return `
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Hạng</th>
+                        <th>Tên</th>
+                        <th>Trận đấu</th>
+                        <th>Thắng</th>
+                        <th>Thua</th>
+                        <th>Tỷ lệ thắng</th>
+                        <th>Điểm số</th>
+                        <th>Chênh lệch</th>
+                        <th>Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rankings.map((ranking, index) => `
+                        <tr class="ranking-row ${index < 3 ? 'top-player' : ''}">
+                            <td>
+                                <span class="rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}">
+                                    ${index + 1}
+                                    ${index === 0 ? '<i class="fas fa-crown"></i>' : ''}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="player-info">
+                                    <strong>${ranking.player.name}</strong>
+                                    ${ranking.player.email ? `<br><small>${ranking.player.email}</small>` : ''}
+                                </div>
+                            </td>
+                            <td>${ranking.matches}</td>
+                            <td class="text-success"><strong>${ranking.wins}</strong></td>
+                            <td class="text-danger">${ranking.losses}</td>
+                            <td>
+                                <span class="badge badge-${ranking.winRate >= 70 ? 'success' : ranking.winRate >= 50 ? 'warning' : 'danger'}">
+                                    ${ranking.winRate.toFixed(1)}%
+                                </span>
+                            </td>
+                            <td>${ranking.points}</td>
+                            <td class="${ranking.pointsDifference >= 0 ? 'text-success' : 'text-danger'}">
+                                ${ranking.pointsDifference >= 0 ? '+' : ''}${ranking.pointsDifference}
+                            </td>
+                            <td>
+                                <div class="rating-display">
+                                    <span class="rating-value">${ranking.rating.toFixed(1)}</span>
+                                    <div class="rating-stars">
+                                        ${this.renderRatingStars(ranking.rating)}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Render rating stars
+    renderRatingStars(rating) {
+        const maxStars = 5;
+        const starValue = Math.min(rating / 20, maxStars); // Scale to 0-5 stars
+        const fullStars = Math.floor(starValue);
+        const hasHalfStar = starValue - fullStars >= 0.5;
+        
+        let stars = '';
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star"></i>';
+        }
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+        for (let i = fullStars + (hasHalfStar ? 1 : 0); i < maxStars; i++) {
+            stars += '<i class="far fa-star"></i>';
+        }
+        
+        return stars;
+    }
+
+    // Render rankings stats
+    renderRankingsStats(rankings) {
+        if (rankings.length === 0) return '';
+
+        const totalMatches = rankings.reduce((sum, r) => sum + r.matches, 0);
+        const avgWinRate = rankings.reduce((sum, r) => sum + r.winRate, 0) / rankings.length;
+        const topPlayer = rankings[0];
+        const mostActivePlayer = rankings.reduce((max, r) => r.matches > max.matches ? r : max, rankings[0]);
+
+        return `
+            <div class="rankings-stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${totalMatches}</div>
+                        <div class="stat-label">Tổng trận đấu</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${avgWinRate.toFixed(1)}%</div>
+                        <div class="stat-label">Tỷ lệ thắng TB</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${topPlayer.player.name}</div>
+                        <div class="stat-label">Hạng nhất</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${mostActivePlayer.player.name}</div>
+                        <div class="stat-label">Tích cực nhất</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     loadRules() {
@@ -1313,6 +1741,516 @@ class PingPongApp {
     // Load initial data
     loadInitialData() {
         // Data is loaded from localStorage in controllers
+    }
+
+    // Tournament action methods
+    viewTournament(tournamentId) {
+        try {
+            const tournament = this.controllers.tournament.getTournament(tournamentId);
+            if (!tournament) {
+                this.showError('Không tìm thấy giải đấu');
+                return;
+            }
+
+            const modalContent = `
+                <div class="tournament-view">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-trophy"></i> ${tournament.name}</h2>
+                        <button class="close-btn" onclick="app.closeModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="tournament-info">
+                            <div class="info-row">
+                                <strong>Loại giải:</strong> ${this.getTournamentTypeText(tournament.type)}
+                            </div>
+                            <div class="info-row">
+                                <strong>Trạng thái:</strong> 
+                                <span class="badge badge-${this.getTournamentStatusClass(tournament.status)}">
+                                    ${this.getTournamentStatusText(tournament.status)}
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Số người tham gia:</strong> ${tournament.participants.length}/${tournament.maxParticipants || 'Không giới hạn'}
+                            </div>
+                            <div class="info-row">
+                                <strong>Ngày bắt đầu:</strong> ${tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}
+                            </div>
+                            <div class="info-row">
+                                <strong>Ngày kết thúc:</strong> ${tournament.endDate ? new Date(tournament.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}
+                            </div>
+                            <div class="info-row">
+                                <strong>Địa điểm:</strong> ${tournament.location || 'Chưa xác định'}
+                            </div>
+                            <div class="info-row">
+                                <strong>Mô tả:</strong> ${tournament.description || 'Không có mô tả'}
+                            </div>
+                        </div>
+                        
+                        <div class="participants-section">
+                            <h3>Danh sách tham gia</h3>
+                            <div class="participants-list">
+                                ${tournament.participants.length > 0 ? 
+                                    tournament.participants.map(p => `<span class="participant-badge">${p.name || p}</span>`).join('') :
+                                    '<p class="text-muted">Chưa có người tham gia</p>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="app.closeModal()">Đóng</button>
+                        <button class="btn btn-primary" onclick="app.editTournament('${tournament.id}')">Chỉnh sửa</button>
+                    </div>
+                </div>
+            `;
+
+            this.showModal(modalContent);
+        } catch (error) {
+            console.error('Error viewing tournament:', error);
+            this.showError('Lỗi xem chi tiết giải đấu: ' + error.message);
+        }
+    }
+
+    editTournament(tournamentId) {
+        try {
+            const tournament = this.controllers.tournament.getTournament(tournamentId);
+            
+            const modalContent = `
+                <div class="tournament-edit">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-edit"></i> ${tournament ? 'Chỉnh sửa giải đấu' : 'Tạo giải đấu mới'}</h2>
+                        <button class="close-btn" onclick="app.closeModal()">×</button>
+                    </div>
+                    <form id="tournamentForm" class="modal-body">
+                        <div class="form-group">
+                            <label for="tournamentName">Tên giải đấu:</label>
+                            <input type="text" id="tournamentName" name="name" value="${tournament ? tournament.name : ''}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tournamentType">Loại giải:</label>
+                            <select id="tournamentType" name="type" required>
+                                <option value="">Chọn loại giải...</option>
+                                <option value="single" ${tournament && tournament.type === 'single' ? 'selected' : ''}>Đơn</option>
+                                <option value="double" ${tournament && tournament.type === 'double' ? 'selected' : ''}>Đôi</option>
+                                <option value="team" ${tournament && tournament.type === 'team' ? 'selected' : ''}>Đội</option>
+                                <option value="mixed" ${tournament && tournament.type === 'mixed' ? 'selected' : ''}>Hỗn hợp</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tournamentMaxParticipants">Số người tối đa:</label>
+                            <input type="number" id="tournamentMaxParticipants" name="maxParticipants" 
+                                   value="${tournament ? tournament.maxParticipants || '' : ''}" min="2" max="128">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tournamentStartDate">Ngày bắt đầu:</label>
+                            <input type="datetime-local" id="tournamentStartDate" name="startDate" 
+                                   value="${tournament && tournament.startDate ? new Date(tournament.startDate).toISOString().slice(0, 16) : ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tournamentEndDate">Ngày kết thúc:</label>
+                            <input type="datetime-local" id="tournamentEndDate" name="endDate"
+                                   value="${tournament && tournament.endDate ? new Date(tournament.endDate).toISOString().slice(0, 16) : ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tournamentLocation">Địa điểm:</label>
+                            <input type="text" id="tournamentLocation" name="location" value="${tournament ? tournament.location || '' : ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tournamentDescription">Mô tả:</label>
+                            <textarea id="tournamentDescription" name="description" rows="3">${tournament ? tournament.description || '' : ''}</textarea>
+                        </div>
+                    </form>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="app.closeModal()">Hủy</button>
+                        <button class="btn btn-primary" onclick="app.saveTournament('${tournament ? tournament.id : ''}')">
+                            ${tournament ? 'Cập nhật' : 'Tạo mới'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            this.showModal(modalContent);
+        } catch (error) {
+            console.error('Error editing tournament:', error);
+            this.showError('Lỗi chỉnh sửa giải đấu: ' + error.message);
+        }
+    }
+
+    async saveTournament(tournamentId) {
+        try {
+            const form = document.getElementById('tournamentForm');
+            const formData = new FormData(form);
+            
+            const tournamentData = {
+                name: formData.get('name'),
+                type: formData.get('type'),
+                maxParticipants: formData.get('maxParticipants') ? parseInt(formData.get('maxParticipants')) : null,
+                startDate: formData.get('startDate') || null,
+                endDate: formData.get('endDate') || null,
+                location: formData.get('location'),
+                description: formData.get('description')
+            };
+
+            if (tournamentId) {
+                // Update existing tournament
+                await this.controllers.tournament.updateTournament(tournamentId, tournamentData);
+                this.showSuccess('Cập nhật giải đấu thành công!');
+            } else {
+                // Create new tournament
+                await this.controllers.tournament.createTournament(tournamentData);
+                this.showSuccess('Tạo giải đấu thành công!');
+            }
+
+            this.closeModal();
+            this.renderTournamentsTable();
+        } catch (error) {
+            console.error('Error saving tournament:', error);
+            this.showError('Lỗi lưu giải đấu: ' + error.message);
+        }
+    }
+
+    async deleteTournament(tournamentId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa giải đấu này?')) {
+            return;
+        }
+
+        try {
+            await this.controllers.tournament.deleteTournament(tournamentId);
+            this.showSuccess('Xóa giải đấu thành công!');
+            this.renderTournamentsTable();
+        } catch (error) {
+            console.error('Error deleting tournament:', error);
+            this.showError('Lỗi xóa giải đấu: ' + error.message);
+        }
+    }
+
+    // Match action methods
+    viewMatch(matchId) {
+        try {
+            const match = this.controllers.match.getMatch(matchId);
+            if (!match) {
+                this.showError('Không tìm thấy trận đấu');
+                return;
+            }
+
+            const modalContent = `
+                <div class="match-view">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-table-tennis"></i> Chi tiết trận đấu</h2>
+                        <button class="close-btn" onclick="app.closeModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="match-info">
+                            <div class="participants">
+                                <div class="participant">
+                                    <strong>${this.getParticipantName(match.participant1)}</strong>
+                                </div>
+                                <div class="vs">VS</div>
+                                <div class="participant">
+                                    <strong>${this.getParticipantName(match.participant2)}</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="match-details">
+                                <div class="info-row">
+                                    <strong>Giải đấu:</strong> ${match.tournament ? match.tournament.name : 'Không xác định'}
+                                </div>
+                                <div class="info-row">
+                                    <strong>Trạng thái:</strong> 
+                                    <span class="badge badge-${this.getMatchStatusClass(match.status)}">
+                                        ${this.getMatchStatusText(match.status)}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <strong>Thời gian:</strong> ${match.scheduledDate ? new Date(match.scheduledDate).toLocaleString('vi-VN') : 'Chưa xác định'}
+                                </div>
+                                <div class="info-row">
+                                    <strong>Người thắng:</strong> ${match.winner ? this.getParticipantName(match.winner) : 'Chưa có'}
+                                </div>
+                            </div>
+
+                            ${match.scores && match.scores.length > 0 ? `
+                                <div class="scores-section">
+                                    <h3>Tỷ số các set</h3>
+                                    <div class="scores-list">
+                                        ${match.scores.map((score, index) => `
+                                            <div class="score-item">
+                                                <span>Set ${index + 1}:</span>
+                                                <span class="score">${score.player1Score} - ${score.player2Score}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="app.closeModal()">Đóng</button>
+                        <button class="btn btn-success" onclick="app.scoreMatch('${match.id}')">Ghi điểm</button>
+                        <button class="btn btn-primary" onclick="app.editMatch('${match.id}')">Chỉnh sửa</button>
+                    </div>
+                </div>
+            `;
+
+            this.showModal(modalContent);
+        } catch (error) {
+            console.error('Error viewing match:', error);
+            this.showError('Lỗi xem chi tiết trận đấu: ' + error.message);
+        }
+    }
+
+    editMatch(matchId) {
+        try {
+            const match = this.controllers.match.getMatch(matchId);
+            const tournaments = this.controllers.tournament.getAllTournaments();
+            const players = this.controllers.player.getAllPlayers();
+            
+            const modalContent = `
+                <div class="match-edit">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-edit"></i> ${match ? 'Chỉnh sửa trận đấu' : 'Tạo trận đấu mới'}</h2>
+                        <button class="close-btn" onclick="app.closeModal()">×</button>
+                    </div>
+                    <form id="matchForm" class="modal-body">
+                        <div class="form-group">
+                            <label for="matchTournament">Giải đấu:</label>
+                            <select id="matchTournament" name="tournament">
+                                <option value="">Chọn giải đấu...</option>
+                                ${tournaments.map(t => `
+                                    <option value="${t.id}" ${match && match.tournament && match.tournament.id === t.id ? 'selected' : ''}>
+                                        ${t.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="matchParticipant1">Người chơi 1:</label>
+                            <select id="matchParticipant1" name="participant1" required>
+                                <option value="">Chọn người chơi...</option>
+                                ${players.map(p => `
+                                    <option value="${p.id}" ${match && match.participant1 && match.participant1.id === p.id ? 'selected' : ''}>
+                                        ${p.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="matchParticipant2">Người chơi 2:</label>
+                            <select id="matchParticipant2" name="participant2" required>
+                                <option value="">Chọn người chơi...</option>
+                                ${players.map(p => `
+                                    <option value="${p.id}" ${match && match.participant2 && match.participant2.id === p.id ? 'selected' : ''}>
+                                        ${p.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="matchScheduledDate">Thời gian:</label>
+                            <input type="datetime-local" id="matchScheduledDate" name="scheduledDate"
+                                   value="${match && match.scheduledDate ? new Date(match.scheduledDate).toISOString().slice(0, 16) : ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="matchStatus">Trạng thái:</label>
+                            <select id="matchStatus" name="status">
+                                <option value="scheduled" ${match && match.status === 'scheduled' ? 'selected' : ''}>Đã lên lịch</option>
+                                <option value="ongoing" ${match && match.status === 'ongoing' ? 'selected' : ''}>Đang diễn ra</option>
+                                <option value="completed" ${match && match.status === 'completed' ? 'selected' : ''}>Hoàn thành</option>
+                                <option value="cancelled" ${match && match.status === 'cancelled' ? 'selected' : ''}>Đã hủy</option>
+                            </select>
+                        </div>
+                    </form>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="app.closeModal()">Hủy</button>
+                        <button class="btn btn-primary" onclick="app.saveMatch('${match ? match.id : ''}')">
+                            ${match ? 'Cập nhật' : 'Tạo mới'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            this.showModal(modalContent);
+        } catch (error) {
+            console.error('Error editing match:', error);
+            this.showError('Lỗi chỉnh sửa trận đấu: ' + error.message);
+        }
+    }
+
+    async saveMatch(matchId) {
+        try {
+            const form = document.getElementById('matchForm');
+            const formData = new FormData(form);
+            
+            const participant1Id = formData.get('participant1');
+            const participant2Id = formData.get('participant2');
+            
+            if (participant1Id === participant2Id) {
+                this.showError('Không thể chọn cùng một người chơi cho cả hai vị trí');
+                return;
+            }
+            
+            const participant1 = this.controllers.player.getPlayer(participant1Id);
+            const participant2 = this.controllers.player.getPlayer(participant2Id);
+            
+            const matchData = {
+                participant1: participant1,
+                participant2: participant2,
+                scheduledDate: formData.get('scheduledDate') || null,
+                status: formData.get('status') || 'scheduled'
+            };
+
+            if (formData.get('tournament')) {
+                matchData.tournament = this.controllers.tournament.getTournament(formData.get('tournament'));
+            }
+
+            if (matchId) {
+                // Update existing match
+                await this.controllers.match.updateMatch(matchId, matchData);
+                this.showSuccess('Cập nhật trận đấu thành công!');
+            } else {
+                // Create new match
+                await this.controllers.match.createMatch(matchData);
+                this.showSuccess('Tạo trận đấu thành công!');
+            }
+
+            this.closeModal();
+            this.renderMatchesTable();
+        } catch (error) {
+            console.error('Error saving match:', error);
+            this.showError('Lỗi lưu trận đấu: ' + error.message);
+        }
+    }
+
+    scoreMatch(matchId) {
+        try {
+            const match = this.controllers.match.getMatch(matchId);
+            if (!match) {
+                this.showError('Không tìm thấy trận đấu');
+                return;
+            }
+
+            const modalContent = `
+                <div class="match-scoring">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-plus-square"></i> Ghi điểm trận đấu</h2>
+                        <button class="close-btn" onclick="app.closeModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="participants-header">
+                            <div class="participant">
+                                <strong>${this.getParticipantName(match.participant1)}</strong>
+                            </div>
+                            <div class="vs">VS</div>
+                            <div class="participant">
+                                <strong>${this.getParticipantName(match.participant2)}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="current-scores">
+                            <h3>Tỷ số hiện tại</h3>
+                            <div id="scoresDisplay">
+                                ${this.renderCurrentScores(match)}
+                            </div>
+                        </div>
+                        
+                        <div class="score-input">
+                            <h3>Thêm set mới</h3>
+                            <div class="score-form">
+                                <div class="score-input-group">
+                                    <label>${this.getParticipantName(match.participant1)}</label>
+                                    <input type="number" id="player1Score" min="0" max="50" value="0">
+                                </div>
+                                <div class="score-separator">-</div>
+                                <div class="score-input-group">
+                                    <label>${this.getParticipantName(match.participant2)}</label>
+                                    <input type="number" id="player2Score" min="0" max="50" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="app.closeModal()">Hủy</button>
+                        <button class="btn btn-success" onclick="app.addScore('${match.id}')">Thêm set</button>
+                        <button class="btn btn-primary" onclick="app.finishMatch('${match.id}')">Kết thúc trận</button>
+                    </div>
+                </div>
+            `;
+
+            this.showModal(modalContent);
+        } catch (error) {
+            console.error('Error opening match scoring:', error);
+            this.showError('Lỗi mở ghi điểm: ' + error.message);
+        }
+    }
+
+    renderCurrentScores(match) {
+        if (!match.scores || match.scores.length === 0) {
+            return '<p class="text-muted">Chưa có điểm số</p>';
+        }
+
+        return match.scores.map((score, index) => `
+            <div class="score-display">
+                <span>Set ${index + 1}:</span>
+                <span class="score-values">${score.player1Score} - ${score.player2Score}</span>
+            </div>
+        `).join('');
+    }
+
+    async addScore(matchId) {
+        try {
+            const player1Score = parseInt(document.getElementById('player1Score').value);
+            const player2Score = parseInt(document.getElementById('player2Score').value);
+
+            if (isNaN(player1Score) || isNaN(player2Score)) {
+                this.showError('Vui lòng nhập điểm số hợp lệ');
+                return;
+            }
+
+            await this.controllers.match.addScore(matchId, player1Score, player2Score);
+            this.showSuccess('Đã thêm điểm số!');
+            
+            // Refresh the scoring modal
+            this.scoreMatch(matchId);
+        } catch (error) {
+            console.error('Error adding score:', error);
+            this.showError('Lỗi thêm điểm: ' + error.message);
+        }
+    }
+
+    async finishMatch(matchId) {
+        try {
+            await this.controllers.match.finishMatch(matchId);
+            this.showSuccess('Đã kết thúc trận đấu!');
+            this.closeModal();
+            this.renderMatchesTable();
+        } catch (error) {
+            console.error('Error finishing match:', error);
+            this.showError('Lỗi kết thúc trận đấu: ' + error.message);
+        }
+    }
+
+    async deleteMatch(matchId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa trận đấu này?')) {
+            return;
+        }
+
+        try {
+            await this.controllers.match.deleteMatch(matchId);
+            this.showSuccess('Xóa trận đấu thành công!');
+            this.renderMatchesTable();
+        } catch (error) {
+            console.error('Error deleting match:', error);
+            this.showError('Lỗi xóa trận đấu: ' + error.message);
+        }
     }
 
     // Initialize UI
@@ -1367,11 +2305,11 @@ function showAddPlayerModal() {
 }
 
 function showCreateTournamentModal() {
-    app.showMessage('Tính năng đang phát triển', 'info');
+    app.editTournament('');
 }
 
 function showCreateMatchModal() {
-    app.showMessage('Tính năng đang phát triển', 'info');
+    app.editMatch('');
 }
 
 function showCreateDoubleModal() {
@@ -1383,7 +2321,7 @@ function showCreateTeamModal() {
 }
 
 function showAddRuleModal() {
-    app.showMessage('Tính năng đang phát triển', 'info');
+    app.showRuleModal();
 }
 
 // Utility functions
@@ -1459,7 +2397,76 @@ function printPlayers() {
 }
 
 function printTournament() {
-    app.showMessage('Tính năng đang phát triển', 'info');
+    try {
+        const tournaments = app.controllers.tournament.getAllTournaments();
+        if (tournaments.length === 0) {
+            app.showError('Không có giải đấu nào để in');
+            return;
+        }
+        
+        // Create print window with tournament data
+        const printContent = `
+            <html>
+                <head>
+                    <title>Danh sách Giải đấu</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .badge { padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+                        .badge-primary { background-color: #007bff; color: white; }
+                        .badge-success { background-color: #28a745; color: white; }
+                        .badge-info { background-color: #17a2b8; color: white; }
+                        .badge-warning { background-color: #ffc107; color: black; }
+                        .badge-danger { background-color: #dc3545; color: white; }
+                        .badge-secondary { background-color: #6c757d; color: white; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Danh sách Giải đấu Ping Pong</h1>
+                        <p>Ngày in: ${new Date().toLocaleDateString('vi-VN')}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tên giải</th>
+                                <th>Loại</th>
+                                <th>Trạng thái</th>
+                                <th>Người tham gia</th>
+                                <th>Ngày bắt đầu</th>
+                                <th>Ngày kết thúc</th>
+                                <th>Địa điểm</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tournaments.map(tournament => `
+                                <tr>
+                                    <td><strong>${tournament.name}</strong></td>
+                                    <td><span class="badge badge-${app.getTournamentTypeClass(tournament.type)}">${app.getTournamentTypeText(tournament.type)}</span></td>
+                                    <td><span class="badge badge-${app.getTournamentStatusClass(tournament.status)}">${app.getTournamentStatusText(tournament.status)}</span></td>
+                                    <td>${tournament.participants.length}/${tournament.maxParticipants || 'Không giới hạn'}</td>
+                                    <td>${tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}</td>
+                                    <td>${tournament.endDate ? new Date(tournament.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}</td>
+                                    <td>${tournament.location || 'Chưa xác định'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.print();
+    } catch (error) {
+        console.error('Error printing tournaments:', error);
+        app.showError('Lỗi in danh sách giải đấu: ' + error.message);
+    }
 }
 
 function printRankings() {

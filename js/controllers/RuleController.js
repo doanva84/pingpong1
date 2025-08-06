@@ -71,9 +71,9 @@ class RuleController {
     getDefaultRules() {
         return [
             {
-                name: 'Điểm thắng set',
+                title: 'Điểm thắng set',
                 type: 'scoring',
-                description: 'Số điểm cần thiết để thắng một set',
+                content: 'Số điểm cần thiết để thắng một set',
                 value: 11,
                 category: 'scoring',
                 priority: 1,
@@ -81,9 +81,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Số set thắng trận',
+                title: 'Số set thắng trận',
                 type: 'match',
-                description: 'Số set cần thắng để thắng trận đấu',
+                content: 'Số set cần thắng để thắng trận đấu',
                 value: 2,
                 category: 'match',
                 priority: 1,
@@ -91,9 +91,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Chênh lệch điểm tối thiểu',
+                title: 'Chênh lệch điểm tối thiểu',
                 type: 'scoring',
-                description: 'Chênh lệch điểm tối thiểu để thắng set khi đạt điểm giới hạn',
+                content: 'Chênh lệch điểm tối thiểu để thắng set khi đạt điểm giới hạn',
                 value: 2,
                 category: 'scoring',
                 priority: 1,
@@ -101,9 +101,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Điểm tối đa một set',
+                title: 'Điểm tối đa một set',
                 type: 'scoring',
-                description: 'Điểm tối đa có thể đạt được trong một set (khi có deuce)',
+                content: 'Điểm tối đa có thể đạt được trong một set (khi có deuce)',
                 value: 21,
                 category: 'scoring',
                 priority: 1,
@@ -111,9 +111,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Thời gian nghỉ giữa các set',
+                title: 'Thời gian nghỉ giữa các set',
                 type: 'timing',
-                description: 'Thời gian nghỉ giữa các set (phút)',
+                content: 'Thời gian nghỉ giữa các set (phút)',
                 value: 1,
                 category: 'timing',
                 priority: 2,
@@ -121,9 +121,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Thời gian timeout',
+                title: 'Thời gian timeout',
                 type: 'timing',
-                description: 'Thời gian timeout cho mỗi đội (phút)',
+                content: 'Thời gian timeout cho mỗi đội (phút)',
                 value: 1,
                 category: 'timing',
                 priority: 2,
@@ -131,9 +131,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Số timeout tối đa',
+                title: 'Số timeout tối đa',
                 type: 'match',
-                description: 'Số lần timeout tối đa cho mỗi đội trong một trận',
+                content: 'Số lần timeout tối đa cho mỗi đội trong một trận',
                 value: 1,
                 category: 'match',
                 priority: 2,
@@ -141,9 +141,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Đổi phát bóng',
+                title: 'Đổi phát bóng',
                 type: 'serving',
-                description: 'Số điểm sau khi đổi quyền phát bóng',
+                content: 'Số điểm sau khi đổi quyền phát bóng',
                 value: 2,
                 category: 'serving',
                 priority: 1,
@@ -151,9 +151,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Bắt buộc đăng ký trước',
+                title: 'Bắt buộc đăng ký trước',
                 type: 'registration',
-                description: 'Thời gian bắt buộc đăng ký trước giải đấu (giờ)',
+                content: 'Thời gian bắt buộc đăng ký trước giải đấu (giờ)',
                 value: 24,
                 category: 'registration',
                 priority: 3,
@@ -161,9 +161,9 @@ class RuleController {
                 actions: []
             },
             {
-                name: 'Tối đa người tham gia',
+                title: 'Tối đa người tham gia',
                 type: 'tournament',
-                description: 'Số lượng tối đa người tham gia trong một giải đấu',
+                content: 'Số lượng tối đa người tham gia trong một giải đấu',
                 value: 32,
                 category: 'tournament',
                 priority: 2,
@@ -178,8 +178,8 @@ class RuleController {
         this.defaultRules.forEach(ruleData => {
             const rule = new Rule(
                 null, // Let Rule generate its own ID
-                ruleData.name,
-                ruleData.description,
+                ruleData.title,
+                ruleData.content,
                 ruleData.category
             );
             
